@@ -1,0 +1,63 @@
+const { MongoClient } = require('mongodb')
+
+// Replace with your actual connection URIs
+const sourceDB = 'dava_dev_db'
+const targetDB = 'dava_staging_db'
+//const testDB = 'dava-india-server'
+const collectionName = 'products'
+const sourceUri = `mongodb://dava_dev_user:Marvel123@localhost:27017/${sourceDB}?authSource=admin`
+const targetUri = `mongodb://dava_staging_user:Marvel123@localhost:27017/${targetDB}?authSource=admin`
+//const testUri = `mongodb://localhost:27017/${sourceDB}`
+
+const sourceClient = new MongoClient(sourceUri)
+const targetClient = new MongoClient(targetUri)
+//const testClient = new MongoClient(testUri)
+
+async function findMissingDocuments(sourceCollection, targetCollection) {
+  // Fetch all _ids from the source and target collections
+  const sourceIds = await sourceCollection.distinct('_id')
+  const targetIds = await targetCollection.distinct('_id')
+
+  // Find missing _ids
+  return sourceIds.filter((id) => !targetIds.map((t) => t.toString()).includes(id.toString()))
+}
+
+async function insertMissingDocuments() {
+  try {
+    // Connect both clients only once
+    await sourceClient.connect()
+    await targetClient.connect()
+    //await testClient.connect()
+
+    const sourceCollection = sourceClient.db(sourceDB).collection(collectionName)
+    const targetCollection = targetClient.db(targetDB).collection(collectionName)
+    //const testCollection = testClient.db(testDB).collection(collectionName)
+
+    // Get the missing document IDs
+    const missingIds = await findMissingDocuments(sourceCollection, targetCollection)
+
+    // Fetch missing documents from the source collection
+    const missingDocuments = await sourceCollection.find({ _id: { $in: missingIds } }).toArray()
+
+    // Insert them into the target collection if there are any missing documents
+    if (missingDocuments.length > 0) {
+       await targetCollection.insertMany(missingDocuments)
+      // await testCollection.insertMany(missingDocuments)
+      console.log(
+        `${missingDocuments.length} documents inserted into the target collection.`,
+        missingDocuments.map((p) => p.title)
+      )
+    } else {
+      console.log('No missing documents found.')
+    }
+  } catch (error) {
+    console.error('Error during insertion:', error)
+  } finally {
+    // Close the connections only once after all operations
+    await sourceClient.close()
+    await targetClient.close()
+  }
+}
+
+insertMissingDocuments().catch(console.error)
+

@@ -1,0 +1,32 @@
+var appConfig;
+const environment = process.env.NODE_ENV || 'development';
+
+if (environment === 'production') appConfig = require('./config/production.json');
+else if (environment === 'staging') appConfig = require('./config/staging.json');
+else appConfig = require('./config/default.json');
+
+const config = {
+  mongodb: {
+    // Use the full connection string from the appConfig
+    url: appConfig.mongodb,
+
+    // Extract the database name from the URL
+    databaseName: appConfig.dbName,
+
+    options: {
+      // Remove deprecated options
+      // tls: true,
+      // tlsCAFile: "./global-bundle.pem", // Path to your CA file
+      // retryWrites: false,
+    }
+  },
+
+  migrationsDir: 'migrations',
+  changelogCollectionName: 'changelog',
+  migrationFileExtension: '.js',
+  useFileHash: false,
+  moduleSystem: 'commonjs'
+};
+
+module.exports = config;
+

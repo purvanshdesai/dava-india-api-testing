@@ -1,0 +1,107 @@
+import { feathers } from '@feathersjs/feathers'
+import configuration from '@feathersjs/configuration'
+import { MODULES_PERMISSIONS } from './permissions'
+
+const app = feathers().configure(configuration())
+
+export const S3_CONST = {
+  BUCKET_NAME: app.get('s3').s3BucketName,
+  REGION: app.get('s3').s3BucketRegion,
+  DOMAIN: 'amazonaws.com',
+  cloudFrontUrl: app.get('s3').cloudFrontUrl
+}
+
+export const TICKET_ISSUE_PARENT_CATEGORIES = {
+  ORDER_RELATED: 'order-related',
+  PRESCRIPTION_RELATED: 'prescription-related'
+}
+
+export const TICKET_ISSUES = {
+  ORDER_NOT_DELIVERED: 'order-not-delivered',
+  LATE_DELIVERY: 'late-delivery',
+  WRONG_MEDICINE_DELIVERED: 'wrong-medicine-delivered',
+  ORDER_CANCELLATION_REQUEST: 'order-cancellation-request',
+  LOST_OR_MISSING_ITEM: 'lost-or-missing-item-in-delivery',
+  PRESCRIPTION_UPLOAD: 'prescription-upload',
+  DOCTOR_CONSULTATION: 'doctor-consultation',
+  DAMAGED_PRODUCT: 'damaged-product',
+  NOT_AS_DESCRIBED: 'not-as-described',
+  EXPIRED_PRODUCT: 'expired',
+  RETURN_REFUND_ISSUE: 'return-refund-issue',
+  OTHER_ISSUE: 'other-issue'
+}
+
+export const TICKET_ISSUE_CATEGORY_MAPPING = {
+  [TICKET_ISSUES.ORDER_NOT_DELIVERED]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.LATE_DELIVERY]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.WRONG_MEDICINE_DELIVERED]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.ORDER_CANCELLATION_REQUEST]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.LOST_OR_MISSING_ITEM]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.DOCTOR_CONSULTATION]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.NOT_AS_DESCRIBED]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.EXPIRED_PRODUCT]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.RETURN_REFUND_ISSUE]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.OTHER_ISSUE]: TICKET_ISSUE_PARENT_CATEGORIES.ORDER_RELATED,
+  [TICKET_ISSUES.PRESCRIPTION_UPLOAD]: TICKET_ISSUE_PARENT_CATEGORIES.PRESCRIPTION_RELATED,
+  [TICKET_ISSUES.DOCTOR_CONSULTATION]: TICKET_ISSUE_PARENT_CATEGORIES.PRESCRIPTION_RELATED
+}
+
+export function getTicketIssueParentCategory(issueValue: string): string | undefined {
+  // Find the key in TICKET_ISSUES that matches the value
+  const issueKey = Object.keys(TICKET_ISSUES).find(
+    (key) => TICKET_ISSUES[key as keyof typeof TICKET_ISSUES] === issueValue
+  )
+
+  // Use the key to get the corresponding parent category from TICKET_ISSUE_CATEGORY_MAPPING
+  if (issueKey) {
+    return TICKET_ISSUE_CATEGORY_MAPPING[TICKET_ISSUES[issueKey as keyof typeof TICKET_ISSUES]]
+  }
+
+  return undefined // Return undefined if the issue value is not found
+}
+
+export function getPermissionTypeFromIssue(issue: string) {
+  switch (issue) {
+    case TICKET_ISSUES.ORDER_NOT_DELIVERED:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.ORDER_NOT_DELIVERED
+    case TICKET_ISSUES.LATE_DELIVERY:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.LATE_DELIVERY
+    case TICKET_ISSUES.WRONG_MEDICINE_DELIVERED:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.WRONG_MEDICINE_DELIVERED
+    case TICKET_ISSUES.ORDER_CANCELLATION_REQUEST:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.ORDER_NOT_DELIVERED // TODO change this
+    case TICKET_ISSUES.LOST_OR_MISSING_ITEM:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.LOST_OR_MISSING_ITEMS_IN_DELIVERY
+    case TICKET_ISSUES.PRESCRIPTION_UPLOAD:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.PRESCRIPTION_UPLOAD
+    case TICKET_ISSUES.DOCTOR_CONSULTATION:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.DOCTOR_CONSULTATION
+    case TICKET_ISSUES.DAMAGED_PRODUCT:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.MANAGE_RETURN
+    case TICKET_ISSUES.NOT_AS_DESCRIBED:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.MANAGE_RETURN
+    case TICKET_ISSUES.EXPIRED_PRODUCT:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.MANAGE_RETURN
+    case TICKET_ISSUES.RETURN_REFUND_ISSUE:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.MANAGE_RETURN
+    case TICKET_ISSUES.OTHER_ISSUE:
+      return MODULES_PERMISSIONS.TICKET_MANAGEMENT.permissions.MANAGE_RETURN
+  }
+}
+
+export const PACKAGE_SPCECS = {
+  BIG: {
+    type: 'big',
+    length: 16,
+    breadth: 20,
+    width: 5,
+    weight: 2
+  },
+  SMALL: {
+    type: 'small',
+    length: 10,
+    breadth: 14,
+    width: 5,
+    weight: 0.5
+  }
+}
